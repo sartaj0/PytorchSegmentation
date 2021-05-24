@@ -67,8 +67,8 @@ class PSPNET(nn.Module):
 		super(PSPNET, self).__init__()
 
 		self.num_classes = num_classes
-		if (num_classes % 8) != 0:
-  			raise TypeError("PSPNET require Multiple of 8 as a input Size")
+		if (output_size % 8) != 0:
+			raise TypeError("PSPNET require Multiple of 8 as a input Size")
 
 		self.base = baseFeatureMaps(batch_size)
 
@@ -112,13 +112,12 @@ class PSPNET(nn.Module):
 		self.output3 = self.blue(self.x)
 
 		self.output4 = self.green(self.x)
-		print(self.x.shape, self.output1.shape, self.output2.shape, self.output3.shape, self.output4.shape)
 
 		# print(torch.cat((self.output1, self.output2, self.output3, self.output4), 1).shape)
 		self.x = torch.cat((self.x, self.output1, self.output2, self.output3, self.output4), 1)
 		self.x = self.final(self.x)
-		print(self.x.shape)
-		return 
+
+		return self.x
 
 
 
