@@ -124,9 +124,10 @@ class PSPNET(nn.Module):
 if __name__ == "__main__":
 	batch_size = 2
 	input_size = 320
-	# model = baseFeatureMaps(batch_size)
+
+	# optimizers Adam,SGD,Nadam with learning rates [ 0.001, 0.001 , 0.01]
 	model = PSPNET(batch_size=2, output_size=input_size, num_classes=2)
 
 	print(model)
-	torch.save(model, "pspnet.pth")
-	model(torch.randn(batch_size, 3, input_size, input_size))
+	# torch.save(model, "pspnet.pth")
+	# model(torch.randn(batch_size, 3, input_size, input_size))
