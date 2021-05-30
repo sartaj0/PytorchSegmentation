@@ -31,10 +31,10 @@ class convBlock(nn.Module):
 		self.x = self.conv(self.x)
 		self.x_skip = self.conv2(self.x_skip)
 
-		self.output = torch.add(self.x, self.x_skip)
-		self.output = nn.ReLU()(self.output)
+		self.x = torch.add(self.x, self.x_skip)
+		self.x = nn.ReLU()(self.x)
 
-		return self.output
+		return self.x
 
 
 class baseFeatureMaps(nn.Module):
@@ -49,9 +49,10 @@ class baseFeatureMaps(nn.Module):
 			)
 
 	def forward(self, x):
-		self.output = self.base(x)
-		# print(torch.mean(self.output.view(self.batch_size, 256, -1), dim=2).shape)
-		return self.output
+		# self.output = self.base(x)
+		# return self.output
+
+		return self.base(x)
 
 class GlobalAvg(nn.Module):
 	def __init__(self, batch_size, filters_size):
@@ -59,7 +60,7 @@ class GlobalAvg(nn.Module):
 		self.batch_size = batch_size
 		self.filters_size = filters_size
 	def forward(self, x):
-		return torch.mean(x.view(self.batch_size, self.filters_size, -1), dim=2).view(batch_size, self.filters_size, 1, 1)
+		return torch.mean(x.view(self.batch_size, self.filters_size, -1), dim=2).view(self.batch_size, self.filters_size, 1, 1)
 
 		
 class PSPNET(nn.Module):
@@ -67,6 +68,12 @@ class PSPNET(nn.Module):
 		super(PSPNET, self).__init__()
 
 		self.num_classes = num_classes
+		if self.num_classes == 2:
+			self.num_classes -= 1
+			self.lastLayer=nn.Sigmoid()
+		else:
+			self.lastLayer=nn.Softmax(dim=1)
+
 		if (output_size % 8) != 0:
 			raise TypeError("PSPNET require Multiple of 8 as a input Size")
 
@@ -98,8 +105,7 @@ class PSPNET(nn.Module):
 
 		self.final = nn.Sequential(
 			nn.Conv2d(512, self.num_classes, kernel_size=3, padding=1),
-			nn.BatchNorm2d(self.num_classes),
-			nn.Sigmoid()
+			nn.BatchNorm2d(self.num_classes)
 			)
 		
 	def forward(self, x):
@@ -114,9 +120,11 @@ class PSPNET(nn.Module):
 		self.output4 = self.green(self.x)
 
 		# print(torch.cat((self.output1, self.output2, self.output3, self.output4), 1).shape)
+		# print(self.x.shape, self.output1.shape, self.output2.shape, self.output3.shape, self.output4.shape)
 		self.x = torch.cat((self.x, self.output1, self.output2, self.output3, self.output4), 1)
-		self.x = self.final(self.x)
 
+		self.x = self.final(self.x)
+		self.x = self.lastLayer(self.x)
 		return self.x
 
 
@@ -126,8 +134,9 @@ if __name__ == "__main__":
 	input_size = 320
 
 	# optimizers Adam,SGD,Nadam with learning rates [ 0.001, 0.001 , 0.01]
-	model = PSPNET(batch_size=2, output_size=input_size, num_classes=2)
+	# OpenCV onnx infernce possible
+	model = PSPNET(batch_size=2, output_size=input_size, num_classes=3)
 
-	print(model)
+	# print(model)
 	# torch.save(model, "pspnet.pth")
-	# model(torch.randn(batch_size, 3, input_size, input_size))
+	print(model(torch.randn(batch_size, 3, input_size, input_size)).shape)

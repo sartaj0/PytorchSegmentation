@@ -85,7 +85,16 @@ class SegNet(nn.Module):
 		self.cb7 = conBlock3(512, 512, 512, 256)
 		self.cb8 = conBlock3(256, 256, 256, 128)
 		self.cb9 = conBlock2(128, 128, 64)
-		self.cb10 = conBlock2(64, 64, n_channels)
+		# self.cb10 = conBlock2(64, 64, n_channels)
+		self.cb10 = nn.Sequential(
+			nn.Conv2d(64, 64, kernel_size=3, padding=(3 - 1) // 2),
+			nn.BatchNorm2d(64),
+			nn.LeakyReLU(0.2),
+
+			nn.Conv2d(64, n_channels, kernel_size=3, padding=(3 - 1) // 2),
+			nn.BatchNorm2d(n_channels),
+			nn.Sigmoid()
+			)
 
 	def forward(self, x):
 
@@ -132,6 +141,12 @@ if __name__ == "__main__":
 	input_size = 416
 	batch_size = 3
 	model = SegNet(input_size=224, n_channels=1)
-	# print(model)
+	print(model)
+	torch.save(model, "segnet.pth")
 	a = torch.rand(batch_size, 3, input_size, input_size)
 	model(a)
+
+	#Can't convert to onnx
+	# model.eval()
+	# dummy_input = torch.randn(1, 3, 416, 416)
+	# torch.onnx.export(model, dummy_input, "model.onnx", verbose=True)
