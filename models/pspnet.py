@@ -38,9 +38,8 @@ class convBlock(nn.Module):
 
 
 class baseFeatureMaps(nn.Module):
-	def __init__(self, batch_size):
+	def __init__(self):
 		super(baseFeatureMaps, self).__init__()
-		self.batch_size = batch_size
 
 		self.base = nn.Sequential(
 			convBlock(in_filter=3,filters=[32, 32, 64]),
@@ -55,16 +54,16 @@ class baseFeatureMaps(nn.Module):
 		return self.base(x)
 
 class GlobalAvg(nn.Module):
-	def __init__(self, batch_size, filters_size):
+	def __init__(self, filters_size):
 		super(GlobalAvg, self).__init__()
-		self.batch_size = batch_size
 		self.filters_size = filters_size
 	def forward(self, x):
+		self.batch_size = x.shape[0]
 		return torch.mean(x.view(self.batch_size, self.filters_size, -1), dim=2).view(self.batch_size, self.filters_size, 1, 1)
 
 		
 class PSPNET(nn.Module):
-	def __init__(self, batch_size, output_size, num_classes):
+	def __init__(self, output_size, num_classes):
 		super(PSPNET, self).__init__()
 
 		self.num_classes = num_classes
@@ -77,10 +76,10 @@ class PSPNET(nn.Module):
 		if (output_size % 8) != 0:
 			raise TypeError("PSPNET require Multiple of 8 as a input Size")
 
-		self.base = baseFeatureMaps(batch_size)
+		self.base = baseFeatureMaps()
 
 		self.red = nn.Sequential(
-			GlobalAvg(batch_size, 256),
+			GlobalAvg(256),
 			nn.Conv2d(256, 64, kernel_size=1),
 			nn.Upsample(scale_factor=output_size, mode='bilinear')
 			)
@@ -135,7 +134,7 @@ if __name__ == "__main__":
 
 	# optimizers Adam,SGD,Nadam with learning rates [ 0.001, 0.001 , 0.01]
 	# OpenCV onnx infernce possible
-	model = PSPNET(batch_size=2, output_size=input_size, num_classes=3)
+	model = PSPNET(output_size=input_size, num_classes=2)
 
 	# print(model)
 	# torch.save(model, "pspnet.pth")

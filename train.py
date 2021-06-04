@@ -21,7 +21,7 @@ def train(args):
 	batch_size = 1
 
 	if args['model'] == 'pspnet':
-		model = PSPNET(batch_size=batch_size, output_size=int(args['size']), num_classes=int(args['noc']))
+		model = PSPNET(output_size=int(args['size']), num_classes=int(args['noc']))
 
 	elif args['model'] == 'segnet':
 		pass 
@@ -51,6 +51,7 @@ def train(args):
 
 	for j in range(int(args['epochs'])):
 		runningLoss = []
+		torch.cuda.empty_cache()
 		for i, (image, mask) in enumerate(dataloader):
 			image, mask = image.to(device), mask.to(device)
 			# torch.cuda.empty_cache()
