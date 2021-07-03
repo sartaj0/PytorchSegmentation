@@ -80,10 +80,10 @@ def train(args):
 				tepoch.set_postfix(loss=loss.item())
 				time.sleep(0.005)
 
-				if i == len(dataloader) -1:
-					# accuracy = accuracy / len(trainloader)
-					# tepoch.set_postfix(loss=running_loss/len(trainloader), accuracy=100. * accuracy)
-					tepoch.set_postfix(loss=running_loss/len(dataloader))
+				if i == len(dataloader) - 1:
+					# accuracy = accuracy / len(dataloader)
+					# tepoch.set_postfix(loss=runningLoss/len(dataloader), accuracy=100. * accuracy)
+					tepoch.set_postfix(loss=runningLoss/len(dataloader))
 
 	torch.save(model, "final_model.pth")
 

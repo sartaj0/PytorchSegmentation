@@ -1,9 +1,9 @@
 {
 	"train_folder": "E:\dataset\segmentation\Person\people_segmentation",
-	"size": 320,
+	"size": 224,
 	"classes": 2,
 	"model": "pspnet",
 	"loss": "dicebce",
 	"epochs": 1,
-	"batch_size": 1
+	"batch_size": 2
 }
