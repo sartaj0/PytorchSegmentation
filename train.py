@@ -57,7 +57,7 @@ def train(args):
 
 		torch.cuda.empty_cache()
 		with tqdm(dataloader, unit="batch") as tepoch:
-			runningLoss = []
+			runningLoss = 0
 			torch.cuda.empty_cache()
 			for i, trainingData in enumerate(tepoch):
 				(image, mask) = trainingData
@@ -74,7 +74,7 @@ def train(args):
 				loss.backward()
 				optimizer.step()
 
-				runningLoss.append(loss.item())
+				runningLoss += loss.item()
 
 				# tepoch.set_postfix(loss=loss.item(), accuracy=100. * train_acc)
 				tepoch.set_postfix(loss=loss.item())
