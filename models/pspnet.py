@@ -109,6 +109,7 @@ class PSPNET(nn.Module):
 		
 	def forward(self, x):
 		self.x = self.base(x)
+		
 
 		self.output1 = self.red(self.x)
 
@@ -117,9 +118,14 @@ class PSPNET(nn.Module):
 		self.output3 = self.blue(self.x)
 
 		self.output4 = self.green(self.x)
+		
+
+		# self.x = torch.cat((self.x, self.red(x), self.yellow(self.x), self.blue(self.x), self.green(self.x)), 1)
 
 		# print(torch.cat((self.output1, self.output2, self.output3, self.output4), 1).shape)
 		# print(self.x.shape, self.output1.shape, self.output2.shape, self.output3.shape, self.output4.shape)
+
+
 		self.x = torch.cat((self.x, self.output1, self.output2, self.output3, self.output4), 1)
 
 		self.x = self.final(self.x)
