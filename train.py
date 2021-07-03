@@ -51,7 +51,7 @@ def train(args):
 	dataset = Dataset(imageDir=args['images'], maskDir=args['masks'], 
 		imageSize=int(args['size']), oneHot=oneHot, numClasses=int(args['classes']))
 
-	dataloader = data.DataLoader(dataset, batch_size=batch_size, shuffle=True)
+	dataloader = data.DataLoader(dataset, batch_size=args['batch_size'], shuffle=True)
 
 	for j in range(int(args['epochs'])):
 
