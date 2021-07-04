@@ -4,6 +4,7 @@
 	"classes": 2,
 	"model": "pspnet",
 	"loss": "dicebce",
-	"epochs": 1,
-	"batch_size": 2
+	"epochs": 4,
+	"batch_size": 2,
+	"dataset_name": "person_segmentation"
 }

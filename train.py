@@ -29,7 +29,14 @@ def train(args):
 		pass 
 	else:
 		raise TypeError("Enter Valid Model Name")
+	print(args["dataset_name"]+".pth")
+	if os.path.isfile(args["dataset_name"]+".pth"):
+		answer = input("Model is already exist would you like to load the weights (y/n): ")
+		if (answer.lower() == "y") or (answer.lower() == "yes"):
+			model.load_state_dict(torch.load(args["dataset_name"]+".pth"))
+
 	model.to(device)
+
 
 
 	if args['loss'] == 'dice':
@@ -51,7 +58,7 @@ def train(args):
 	dataset = Dataset(imageDir=args['images'], maskDir=args['masks'], 
 		imageSize=int(args['size']), oneHot=oneHot, numClasses=int(args['classes']))
 
-	dataloader = data.DataLoader(dataset, batch_size=args['batch_size'], shuffle=True)
+	dataloader = data.DataLoader(dataset, batch_size=args['batch_size'], shuffle=True, num_workers = 3)
 
 	for j in range(int(args['epochs'])):
 
@@ -74,10 +81,11 @@ def train(args):
 				loss.backward()
 				optimizer.step()
 
-				runningLoss += loss.item()
+				loss_value = loss.item()
+				runningLoss += loss_value
 
 				# tepoch.set_postfix(loss=loss.item(), accuracy=100. * train_acc)
-				tepoch.set_postfix(loss=loss.item())
+				tepoch.set_postfix(loss=loss_value)
 				time.sleep(0.005)
 
 				if i == len(dataloader) - 1:
@@ -85,7 +93,8 @@ def train(args):
 					# tepoch.set_postfix(loss=runningLoss/len(dataloader), accuracy=100. * accuracy)
 					tepoch.set_postfix(loss=runningLoss/len(dataloader))
 
-	torch.save(model, "final_model.pth")
+	# torch.save(model, "final_model.pth")
+	torch.save(model.state_dict(), args["dataset_name"]+".pth")
 
 
 if __name__ == "__main__":
@@ -96,5 +105,6 @@ if __name__ == "__main__":
 		args = eval(f.read())
 	args['images'] = os.path.join(args['train_folder'], "images").replace("\\", "/")
 	args['masks'] = os.path.join(args['train_folder'], "masks").replace("\\", "/")
+
 	print(args)
 	train(args)
