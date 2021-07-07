@@ -4,7 +4,8 @@
 	"classes": 2,
 	"model": "pspnet",
 	"loss": "dicebce",
-	"epochs": 4,
+	"epochs": 5,
 	"batch_size": 2,
-	"dataset_name": "person_segmentation"
+	"dataset_name": "person_segmentation",
+	"val_folder": "E:\dataset\segmentation\PennFudanPed"
 }
