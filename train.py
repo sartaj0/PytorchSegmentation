@@ -16,13 +16,18 @@ import numpy as np
 from tqdm import tqdm
 from PIL import Image
 
-from models.pspnet import PSPNET
+from model.pspnet import PSPNET
 from modules.dataloader import Dataset
 
 torch.cuda.empty_cache()
 
 
 def train(args):
+
+	if not os.path.isdir(args['save_dir']):
+		os.mkdir(args['save_dir'])
+
+	args['size'] = int(args['size'])
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 	batch_size = 1
@@ -38,6 +43,7 @@ def train(args):
 		answer = input("Model is already exist would you like to load the weights (y/n): ")
 		if (answer.lower() == "y") or (answer.lower() == "yes"):
 			model.load_state_dict(torch.load(args["dataset_name"]+".pth"))
+	print(model)
 
 	model.to(device)
 
@@ -55,9 +61,9 @@ def train(args):
 		oneHot = False
 
 	trainDataset = Dataset(imageDir=args['train_images'], maskDir=args['train_masks'], 
-		imageSize=int(args['size']), oneHot=oneHot, numClasses=int(args['classes']))
+		imageSize=args['size'], oneHot=oneHot, numClasses=int(args['classes']))
 
-	dataloader = data.DataLoader(trainDataset, batch_size=args['batch_size'], shuffle=True, num_workers = 3)
+	dataloader = data.DataLoader(trainDataset, batch_size=args['batch_size'], shuffle=True, num_workers = -1)
 
 
 
@@ -65,10 +71,10 @@ def train(args):
 		testDataset = Dataset(imageDir=args['val_images'], maskDir=args['val_masks'], 
 			imageSize=int(args['size']), oneHot=oneHot, numClasses=int(args['classes']))
 
-		testDataLoader = data.DataLoader(testDataset, batch_size=args['batch_size'], shuffle=True, num_workers = 3)
+		testDataLoader = data.DataLoader(testDataset, batch_size=args['batch_size'], shuffle=True, num_workers = -1)
 
-
-
+	minValLoss = None
+	PATH = os.path.join(args['save_dir'], args["model"])
 	for epoch in range(1, int(args['epochs']) + 1):
 
 		torch.cuda.empty_cache()
@@ -122,11 +128,19 @@ def train(args):
 
 		print(f"Epochs: {epoch}\t Training Loss: {np.mean(trainLoss)}\t Testing Loss: {np.mean(valLoss)}")
 
+		if (minValLoss is None) or (minValLoss > np.mean(valLoss)):
+			minValLoss = np.mean(valLoss)
+			torch.save(model.state_dict(), PATH+".pth")
 
+		model.load_state_dict(torch.load(PATH +".pth"))
+		model.to("cpu")
+		model.eval()
 
+		dummy_input = torch.randn(1, imgChannel, arg['size'], args['size'])
+		torch.onnx.export(model, dummy_input,
+			os.path.join(f"{PATH}.onnx"), 
+			verbose=True)
 
-	# torch.save(model, "final_model.pth")
-	torch.save(model.state_dict(), os.path.join(args['save_dir'], args["model"]+".pth"))
 
 
 if __name__ == "__main__":
