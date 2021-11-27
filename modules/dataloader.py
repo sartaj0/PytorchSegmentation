@@ -1,10 +1,13 @@
 # from torch.utils.data import Dataset, DataLoader
-from torch.utils import data 
+
 import os
-from torchvision import transforms
-from PIL import Image
 import numpy as np 
+from PIL import Image
+
 import torch
+from torch.utils import data 
+from torchvision import transforms
+
 import sys
 
 np.set_printoptions(threshold=sys.maxsize)
@@ -29,8 +32,12 @@ class Dataset(data.Dataset):#
 					break
 
 
-		self.transform = transform = transforms.Compose([transforms.ToTensor(), 
-			transforms.Resize((imageSize, imageSize))])
+		self.transform = transform = transforms.Compose([
+			transforms.Resize((imageSize, imageSize)),
+			transforms.ToTensor(), 
+			transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+			
+			])
 
 		self.transform2 = transforms.Compose([transforms.Resize((imageSize, imageSize))])
 

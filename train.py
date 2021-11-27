@@ -1,19 +1,24 @@
 # python train.py -d data.json
 
 import torch
-import torchvision
-import argparse 
-from torchvision import transforms
-import os 
-from PIL import Image
-import numpy as np 
-from models.pspnet import PSPNET
-from loss.dice_loss import DiceLoss, DiceBCELoss
-from dataloader.dataloader import Dataset
-from torch.utils import data 
+import torch.nn as nn
 from torch import optim
-from tqdm import tqdm
+from torch.utils import data 
+
+import torchvision
+from torchvision import transforms
+
+
+import os 
 import time
+import argparse 
+import numpy as np 
+from tqdm import tqdm
+from PIL import Image
+
+from models.pspnet import PSPNET
+from modules.dataloader import Dataset
+
 torch.cuda.empty_cache()
 
 
@@ -37,18 +42,13 @@ def train(args):
 	model.to(device)
 
 
-
-	if args['loss'] == 'dice':
-		criterion = DiceLoss()
-	elif args['loss'] == 'dicebce':
-		criterion = DiceBCELoss()
-	elif args['loss'] == 'binary':
+	if args['loss'] == 'binary':
 		criterion = nn.BCELoss()
 	else:
 		raise TypeError("Enter Valid Loss Name")
 
-	learning_rate = 0.001
-	optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+	learning_rate = 0.000087
+	optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=1e-3)
 
 	oneHot = True
 	if int(args['classes']) == 2:
@@ -69,77 +69,64 @@ def train(args):
 
 
 
-	for j in range(int(args['epochs'])):
+	for epoch in range(1, int(args['epochs']) + 1):
 
 		torch.cuda.empty_cache()
 
 		model.train()
-		with tqdm(dataloader, unit="batch") as tepoch:
-			runningLoss = 0
+		with tqdm(dataloader, unit="batch", leave=False) as tepoch:
+			trainLoss = []
 			torch.cuda.empty_cache()
-			for i, trainingData in enumerate(tepoch):
+			for i, inputs in enumerate(tepoch):
 
-				(image, mask) = trainingData
-				tepoch.set_description(f"Training Epoch {j + 1}")
-				image, mask = image.to(device), mask.to(device)
+				tepoch.set_description(f"Training Epoch {epoch}")
 				# torch.cuda.empty_cache()
 
 				optimizer.zero_grad()
 
-				output = model.forward(image)
+				output = model.forward(inputs[0].to(device))
 
-				loss = criterion(output, mask)
+				loss = criterion(output, inputs[1].to(device))
 
 				loss.backward()
 				optimizer.step()
 
 				loss_value = loss.item()
-				runningLoss += loss_value
+				trainLoss.append(loss_value)
 
-				# tepoch.set_postfix(loss=loss.item(), accuracy=100. * train_acc)
 				tepoch.set_postfix(loss=loss_value)
-				time.sleep(0.005)
-
-				if i == len(dataloader) - 1:
-					# accuracy = accuracy / len(dataloader)
-					# tepoch.set_postfix(loss=runningLoss/len(dataloader), accuracy=100. * accuracy)
-					tepoch.set_postfix(loss=runningLoss/len(dataloader))
 
 
 
 		# Validation 
-		runningLoss = 0
+		valLoss = []
 		model.eval()
 		if args['validation']:
 			with torch.no_grad():
-				with tqdm(testDataLoader, unit="batch") as tepoch:
+				with tqdm(testDataLoader, unit="batch", leave=False) as tepoch:
 					torch.cuda.empty_cache()
-					for i, testingData in enumerate(tepoch):
-						(image, mask) = testingData
-						tepoch.set_description(f"Testing Epoch {j + 1}")
-						image, mask = image.to(device), mask.to(device)
+					for i, inputs in enumerate(tepoch):
+						# (image, mask) = testingData
+						tepoch.set_description(f"Testing Epoch {epoch}")
+						# image, mask = image.to(device), mask.to(device)
 
-						output = model.forward(image)
+						output = model.forward(inputs[0].to(device))
 
-						loss = criterion(output, mask)
+						loss = criterion(output, inputs[1].to(device))
 
 						loss_value = loss.item()
-						runningLoss += loss_value
+						valLoss.append(loss_value)
 
 						# tepoch.set_postfix(loss=loss.item(), accuracy=100. * train_acc)
 						tepoch.set_postfix(loss=loss_value)
-						time.sleep(0.005)
 
-						if i == len(testDataLoader) - 1:
-							# accuracy = accuracy / len(testDataLoader)
-							# tepoch.set_postfix(loss=runningLoss/len(testDataLoader), accuracy=100. * accuracy)
-							tepoch.set_postfix(loss=runningLoss/len(testDataLoader))
+		print(f"Epochs: {epoch}\t Training Loss: {np.mean(trainLoss)}\t Testing Loss: {np.mean(valLoss)}")
 
 
 
 
 	# torch.save(model, "final_model.pth")
-	torch.save(model.state_dict(), args["dataset_name"]+".pth")
+	torch.save(model.state_dict(), os.path.join(args['save_dir'], args["model"]+".pth"))
 
 
 if __name__ == "__main__":
