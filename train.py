@@ -30,7 +30,7 @@ def train(args):
 	args['size'] = int(args['size'])
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-	batch_size = 1
+	PATH = os.path.join(args['save_dir'], args["model"])
 
 	if args['model'] == 'pspnet':
 		model = PSPNET(output_size=int(args['size']), num_classes=int(args['classes']))
@@ -39,15 +39,15 @@ def train(args):
 		pass 
 	else:
 		raise TypeError("Enter Valid Model Name")
-	if os.path.isfile(args["dataset_name"]+".pth"):
+	if os.path.isfile(PATH+".pth"):
 		answer = input("Model is already exist would you like to load the weights (y/n): ")
 		if (answer.lower() == "y") or (answer.lower() == "yes"):
-			model.load_state_dict(torch.load(args["dataset_name"]+".pth"))
+			model.load_state_dict(torch.load(PATH+".pth"))
 	print(model)
 
 	model.to(device)
 
-
+	# '''
 	if args['loss'] == 'binary':
 		criterion = nn.BCELoss()
 	else:
@@ -63,7 +63,7 @@ def train(args):
 	trainDataset = Dataset(imageDir=args['train_images'], maskDir=args['train_masks'], 
 		imageSize=args['size'], oneHot=oneHot, numClasses=int(args['classes']))
 
-	dataloader = data.DataLoader(trainDataset, batch_size=args['batch_size'], shuffle=True, num_workers = -1)
+	dataloader = data.DataLoader(trainDataset, batch_size=args['batch_size'], shuffle=True)
 
 
 
@@ -71,10 +71,10 @@ def train(args):
 		testDataset = Dataset(imageDir=args['val_images'], maskDir=args['val_masks'], 
 			imageSize=int(args['size']), oneHot=oneHot, numClasses=int(args['classes']))
 
-		testDataLoader = data.DataLoader(testDataset, batch_size=args['batch_size'], shuffle=True, num_workers = -1)
+		testDataLoader = data.DataLoader(testDataset, batch_size=args['batch_size'], shuffle=True)
 
 	minValLoss = None
-	PATH = os.path.join(args['save_dir'], args["model"])
+	
 	for epoch in range(1, int(args['epochs']) + 1):
 
 		torch.cuda.empty_cache()
@@ -102,8 +102,6 @@ def train(args):
 
 				tepoch.set_postfix(loss=loss_value)
 
-
-
 		# Validation 
 		valLoss = []
 		model.eval()
@@ -128,18 +126,20 @@ def train(args):
 
 		print(f"Epochs: {epoch}\t Training Loss: {np.mean(trainLoss)}\t Testing Loss: {np.mean(valLoss)}")
 
+		# '''
 		if (minValLoss is None) or (minValLoss > np.mean(valLoss)):
 			minValLoss = np.mean(valLoss)
 			torch.save(model.state_dict(), PATH+".pth")
 
-		model.load_state_dict(torch.load(PATH +".pth"))
-		model.to("cpu")
-		model.eval()
+		
+	model.load_state_dict(torch.load(PATH +".pth"))
+	model.to("cpu")
+	model.eval()
 
-		dummy_input = torch.randn(1, imgChannel, arg['size'], args['size'])
-		torch.onnx.export(model, dummy_input,
-			os.path.join(f"{PATH}.onnx"), 
-			verbose=True)
+	dummy_input = torch.randn(1, 3, args['size'], args['size'])
+	torch.onnx.export(model, dummy_input,
+		os.path.join(f"{PATH}.onnx"), 
+		verbose=True)
 
 
 
