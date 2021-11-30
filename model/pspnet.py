@@ -6,7 +6,7 @@ class convBlock(nn.Module):
 		f1, f2, f3 = filters
 
 		self.conv = nn.Sequential(
-			nn.Conv2d(in_filter, f1, kernel_size=1, padding=0),
+			nn.Conv2d(in_filter, f1, kernel_size=3, padding=1),
 			nn.BatchNorm2d(f1),
 			nn.LeakyReLU(0.2),
 
@@ -15,7 +15,7 @@ class convBlock(nn.Module):
 			nn.LeakyReLU(0.2),
 
 
-			nn.Conv2d(f2, f3, kernel_size=1, padding=0),
+			nn.Conv2d(f2, f3, kernel_size=3, padding=1),
 			nn.BatchNorm2d(f3),
 			nn.LeakyReLU(0.2),
 

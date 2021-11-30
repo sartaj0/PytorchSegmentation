@@ -16,6 +16,7 @@ import numpy as np
 from tqdm import tqdm
 from PIL import Image
 
+from model.unet import UNet
 from model.pspnet import PSPNET
 from modules.dataloader import Dataset
 
@@ -35,8 +36,9 @@ def train(args):
 	if args['model'] == 'pspnet':
 		model = PSPNET(output_size=int(args['size']), num_classes=int(args['classes']))
 
-	elif args['model'] == 'segnet':
-		pass 
+	elif args['model'] == 'unet':
+		channels = [3, 32, 64, 128, 256]
+		model = UNet(channels, outputSize=int(args['size']), num_classes=int(args['classes'])) 
 	else:
 		raise TypeError("Enter Valid Model Name")
 	if os.path.isfile(PATH+".pth"):
@@ -53,7 +55,7 @@ def train(args):
 	else:
 		raise TypeError("Enter Valid Loss Name")
 
-	learning_rate = 0.000087
+	learning_rate = 0.00087
 	optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=1e-3)
 
 	oneHot = True
@@ -137,9 +139,7 @@ def train(args):
 	model.eval()
 
 	dummy_input = torch.randn(1, 3, args['size'], args['size'])
-	torch.onnx.export(model, dummy_input,
-		os.path.join(f"{PATH}.onnx"), 
-		verbose=True)
+	torch.onnx.export(model, dummy_input, f"{PATH}.onnx", verbose=True, opset_version=10)
 
 
 
