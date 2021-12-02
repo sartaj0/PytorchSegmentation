@@ -82,7 +82,7 @@ class Decoder(nn.Module):
 			)
 
 class UNet(nn.Module):
-	def __init__(self, channels, num_classes=2, outputSize=256, retainDim=True):
+	def __init__(self, channels, num_classes=2, outputSize=256, retainDim=False):
 
 		super(UNet, self).__init__()
 
@@ -129,8 +129,9 @@ if __name__ == '__main__':
 	# b = b[::-1]
 	# c = dec(b[0], b[1:])
 	# print(c.shape)
+
 	outputSize = 416
-	unet = UNet(channels, retainDim=False)
+	unet = UNet(channels, retainDim=True, outputSize=416)
 	print(unet)
 	a = torch.rand([1, 3, outputSize, outputSize])
 	print(unet(a).shape)

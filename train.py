@@ -10,17 +10,36 @@ from torchvision import transforms
 
 
 import os 
+import cv2
 import time
 import argparse 
 import numpy as np 
 from tqdm import tqdm
 from PIL import Image
+import matplotlib.pyplot as plt
 
 from model.unet import UNet
 from model.pspnet import PSPNET
 from modules.dataloader import Dataset
+from modules.loss import BCEFocalLoss
+
+
+from modules.metrics import IoULoss
 
 torch.cuda.empty_cache()
+
+def save_loss_image(train_loss, val_loss, epoch, PATH):
+
+	fig = plt.figure()
+	plt.plot([k for k in range(1, epoch + 1)], train_loss, label = "Training Loss")
+	plt.plot([k for k in range(1, epoch + 1)], val_loss, label = "Validation Loss")
+	plt.legend()
+	plt.title(PATH)
+	fig.canvas.draw()
+	img = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
+	img  = img.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+	img = cv2.cvtColor(img,cv2.COLOR_RGB2BGR)
+	cv2.imwrite(f"{PATH}_loss.jpg", img)
 
 
 def train(args):
@@ -37,7 +56,7 @@ def train(args):
 		model = PSPNET(output_size=int(args['size']), num_classes=int(args['classes']))
 
 	elif args['model'] == 'unet':
-		channels = [3, 32, 64, 128, 256]
+		channels = [3, 32, 64, 128, 256, 512]
 		model = UNet(channels, outputSize=int(args['size']), num_classes=int(args['classes'])) 
 	else:
 		raise TypeError("Enter Valid Model Name")
@@ -52,10 +71,15 @@ def train(args):
 	# '''
 	if args['loss'] == 'binary':
 		criterion = nn.BCELoss()
+	elif args['loss'] == 'focal':
+		criterion = BCEFocalLoss()
 	else:
 		raise TypeError("Enter Valid Loss Name")
 
-	learning_rate = 0.00087
+
+	metric = IoULoss()
+
+	learning_rate = 0.000087
 	optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=1e-3)
 
 	oneHot = True
@@ -68,7 +92,6 @@ def train(args):
 	dataloader = data.DataLoader(trainDataset, batch_size=args['batch_size'], shuffle=True)
 
 
-
 	if args['validation']:
 		testDataset = Dataset(imageDir=args['val_images'], maskDir=args['val_masks'], 
 			imageSize=int(args['size']), oneHot=oneHot, numClasses=int(args['classes']))
@@ -76,6 +99,8 @@ def train(args):
 		testDataLoader = data.DataLoader(testDataset, batch_size=args['batch_size'], shuffle=True)
 
 	minValLoss = None
+	trainEpochLoss = []
+	valEpochLoss = []
 	
 	for epoch in range(1, int(args['epochs']) + 1):
 
@@ -98,6 +123,8 @@ def train(args):
 
 				loss.backward()
 				optimizer.step()
+
+				# accuracy = metric(output, inputs[1].to(device)).item()
 
 				loss_value = loss.item()
 				trainLoss.append(loss_value)
@@ -128,17 +155,23 @@ def train(args):
 
 		print(f"Epochs: {epoch}\t Training Loss: {np.mean(trainLoss)}\t Testing Loss: {np.mean(valLoss)}")
 
-		# '''
+		
 		if (minValLoss is None) or (minValLoss > np.mean(valLoss)):
 			minValLoss = np.mean(valLoss)
 			torch.save(model.state_dict(), PATH+".pth")
 
+		trainEpochLoss.append(np.mean(trainLoss))
+		valEpochLoss.append(np.mean(valLoss))
+		save_loss_image(trainEpochLoss, valEpochLoss, epoch, PATH)
+
 		
 	model.load_state_dict(torch.load(PATH +".pth"))
+	# '''
 	model.to("cpu")
 	model.eval()
 
-	dummy_input = torch.randn(1, 3, args['size'], args['size'])
+	# dummy_input = torch.randn(1, 3, args['size'], args['size'])
+	dummy_input = torch.randn(1, 3, 512, 512)
 	torch.onnx.export(model, dummy_input, f"{PATH}.onnx", verbose=True, opset_version=10)
 
 
