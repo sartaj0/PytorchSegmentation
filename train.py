@@ -72,7 +72,7 @@ def train(args):
 	if args['loss'] == 'binary':
 		criterion = nn.BCELoss()
 	elif args['loss'] == 'focal':
-		criterion = BCEFocalLoss()
+		criterion = BCEFocalLoss(0.8, 2)
 	else:
 		raise TypeError("Enter Valid Loss Name")
 
@@ -87,14 +87,14 @@ def train(args):
 		oneHot = False
 
 	trainDataset = Dataset(imageDir=args['train_images'], maskDir=args['train_masks'], 
-		imageSize=args['size'], oneHot=oneHot, numClasses=int(args['classes']))
+		imageSize=args['size'], oneHot=oneHot, numClasses=int(args['classes']), aug=True)
 
 	dataloader = data.DataLoader(trainDataset, batch_size=args['batch_size'], shuffle=True)
 
 
 	if args['validation']:
 		testDataset = Dataset(imageDir=args['val_images'], maskDir=args['val_masks'], 
-			imageSize=int(args['size']), oneHot=oneHot, numClasses=int(args['classes']))
+			imageSize=int(args['size']), oneHot=oneHot, numClasses=int(args['classes']), aug=False)
 
 		testDataLoader = data.DataLoader(testDataset, batch_size=args['batch_size'], shuffle=True)
 

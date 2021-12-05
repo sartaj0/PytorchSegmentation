@@ -14,10 +14,16 @@ np.set_printoptions(threshold=sys.maxsize)
 
 
 class Transformation(object):
-	def __init__(self, imageSize=False, Normalize=False):
+	def __init__(self, imageSize=False, Normalize=False, aug=True):
 		self.imageSize = imageSize
 		self.toTensor = transforms.ToTensor()
 		self.normalize = transforms.Normalize(Normalize[0], Normalize[1])
+
+		self.aug = aug
+
+		self.gaussianBlur = transforms.GaussianBlur(3)
+		self.grayScale = transforms.Grayscale(3)
+		self.colorJitter = transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.1)
 
 	def Resize(self, image, mask):
 		image = image.resize((self.imageSize, self.imageSize))
@@ -32,12 +38,26 @@ class Transformation(object):
 		return image, mask
 
 	def __call__(self, image, mask):
+		# Augmentation
+		if self.aug:
 
-		# Horizontal Flip
-		if np.random.rand() > 0.5:
-			image, mask = self.HorizontalFlip(image, mask)
+			# Horizontal Flip
+			if np.random.rand() < 0.5:
+				image, mask = self.HorizontalFlip(image, mask)
+			
+			# Blur
+			if np.random.rand() < 0.3:
+				image = self.gaussianBlur(image)
+
+			if np.random.rand() < 0.3:
+				image = self.colorJitter(image)
+
+			# GrayScale
+			if np.random.rand() < 0.1:
+				image = self.grayScale(image)
+
+
 		image, mask = self.Resize(image, mask)
-
 		image = self.toTensor(image)
 		image = self.normalize(image)
 
@@ -46,7 +66,7 @@ class Transformation(object):
 
 
 class Dataset(data.Dataset):#
-	def __init__(self, imageDir, maskDir, imageSize, numClasses, oneHot=False):
+	def __init__(self, imageDir, maskDir, imageSize, numClasses, oneHot=False, aug=True):
 		self.imageSize = imageSize
 		endswith = (".jpg", ".JPG", ".png", ".jpeg", ".webp")
 
@@ -68,7 +88,10 @@ class Dataset(data.Dataset):#
 		# self.transform1 = transforms.Compose([transforms.Resize((imageSize, imageSize)), transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 		# self.transform2 = transforms.Compose([transforms.Resize((imageSize, imageSize))])
 
-		self.transform = Transformation(imageSize=imageSize, Normalize=((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)))
+		self.transform = Transformation(
+			imageSize=imageSize, 
+			Normalize=((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+			aug=aug)
 
 		self.oneHot = oneHot
 		self.numClasses = numClasses
@@ -104,23 +127,22 @@ if __name__ == "__main__":
 	import cv2
 	dataset = Dataset(imageDir=r'E:\dataset\segmentation\Person\people_segmentation\images',
 		maskDir=r'E:\dataset\segmentation\Person\people_segmentation\masks', imageSize=224,
-		oneHot=False, numClasses=2)
+		oneHot=False, numClasses=2, aug=True)
 
-	dataloader = data.DataLoader(dataset, batch_size=50, shuffle=True)
+	# dataloader = data.DataLoader(dataset, batch_size=50, shuffle=True)
 	transform = transforms.ToPILImage()
 
+	for i in range(100):
+		img, mask = dataset[3]
+		print(img.shape, img.dtype, mask.shape, mask.dtype)
 
-	for i, (image, mask) in enumerate(dataloader):
-		print(i, image.shape, image.dtype, mask.shape, mask.dtype)
-		for img in image:
-			img *= 0.5
-			img += 0.5
+		img *= 0.5
+		img += 0.5
 
-			img = transform(img)
-			img.show()
+		img = transform(img)
 
-			mask0 = mask[0].numpy().astype(np.uint8).reshape(224, 224) * 255
-			cv2.imshow("mask", mask0)
-			cv2.waitKey(0)
-			break 
-		break
+		mask0 = mask.numpy().astype(np.uint8).reshape(224, 224) * 255
+		cv2.imshow("img", cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR))
+		cv2.imshow("mask", mask0)
+		if cv2.waitKey(500) == ord('q'):
+			break

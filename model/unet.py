@@ -120,20 +120,7 @@ class UNet(nn.Module):
 if __name__ == '__main__':
 	channels = [3, 32, 64, 128, 256, 512]
 
-	# enc = Encoder(channels)
-	# dec = Decoder(channels[1:][::-1])
-	# print(enc)
-	# print(dec)
-	# a = torch.rand([1, 3, 512, 512])
-	# b = enc(a)
-	# b = b[::-1]
-	# c = dec(b[0], b[1:])
-	# print(c.shape)
-
 	outputSize = 416
 	unet = UNet(channels, retainDim=True, outputSize=416)
-	print(unet)
-	a = torch.rand([1, 3, outputSize, outputSize])
-	print(unet(a).shape)
-	torch.save(unet.state_dict(), "unet.pth", )
+
 	
