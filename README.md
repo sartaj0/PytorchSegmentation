@@ -9,6 +9,8 @@
 ## Onnx Model
 From [here](https://drive.google.com/drive/folders/15VQZVkfNaAGdoFVUabpdWid6aUw_i7d_?usp=sharing) you can download onnx converted model and use this [file](https://github.com/sartaj0/PytorchSegmentation/blob/main/inferenceOnnx.py) for inferencing with opencv. 
 
+
+## Output Example
 Download the model from [here] 
 | Image | Prediction Mask | Output |
 | --- | --- | --- |
