@@ -14,3 +14,4 @@ From [here](https://drive.google.com/drive/folders/15VQZVkfNaAGdoFVUabpdWid6aUw_
 | Image | Prediction Mask | Output |
 | --- | --- | --- |
 |<img src="./images/IMG_6598.JPG" width="250" title="failure cases"> | <img src="./images/mask_IMG_6598.JPG"  width="250" title="failure cases"> | <img src="./images/output_IMG_6598.JPG"  width="250" title="failure cases"> |
+|<img src="./images/IMG_7124.JPG" width="250" title="failure cases"> | <img src="./images/mask_IMG_7124.JPG"  width="250" title="failure cases"> | <img src="./images/output_IMG_7124.JPG"  width="250" title="failure cases"> |
