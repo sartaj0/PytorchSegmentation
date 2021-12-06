@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 from model.unet import UNet
 from model.pspnet import PSPNET
 from modules.dataloader import Dataset
-from modules.loss import BCEFocalLoss
+from modules.loss import BCEFocalLoss, TverskyLoss, FocalTverskyLoss
 
 
 from modules.metrics import IoULoss
@@ -56,7 +56,7 @@ def train(args):
 		model = PSPNET(output_size=int(args['size']), num_classes=int(args['classes']))
 
 	elif args['model'] == 'unet':
-		channels = [3, 32, 64, 128, 256, 512]
+		channels = [3, 8, 16, 32, 64, 128, 256, 512]
 		model = UNet(channels, outputSize=int(args['size']), num_classes=int(args['classes'])) 
 	else:
 		raise TypeError("Enter Valid Model Name")
@@ -73,14 +73,17 @@ def train(args):
 		criterion = nn.BCELoss()
 	elif args['loss'] == 'focal':
 		criterion = BCEFocalLoss(0.8, 2)
+	elif args['loss'] == 'tversky':
+		criterion = TverskyLoss()
+	elif args['loss'] == 'focaltversky':	
+		criterion = FocalTverskyLoss()
 	else:
 		raise TypeError("Enter Valid Loss Name")
 
 
 	metric = IoULoss()
 
-	learning_rate = 0.000087
-	optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=1e-3)
+	optimizer = optim.Adam(model.parameters(), lr=args['lr'], weight_decay=1e-3)
 
 	oneHot = True
 	if int(args['classes']) == 2:
@@ -170,8 +173,8 @@ def train(args):
 	model.to("cpu")
 	model.eval()
 
-	# dummy_input = torch.randn(1, 3, args['size'], args['size'])
-	dummy_input = torch.randn(1, 3, 512, 512)
+	dummy_input = torch.randn(1, 3, args['size'], args['size'])
+	# dummy_input = torch.randn(1, 3, 512, 512)
 	torch.onnx.export(model, dummy_input, f"{PATH}.onnx", verbose=True, opset_version=10)
 
 
