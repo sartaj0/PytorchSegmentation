@@ -1,10 +1,10 @@
 {
 	"size": 512,
-	"lr": 0.0000087,
+	"lr": 0.0001,
 	"classes": 2,
 	"model": "unet",
 	"loss": "focal",
-	"epochs": 10,
+	"epochs": 20,
 	"batch_size": 8,
 	"dataset_name": "person_segmentation",
 	"train_folder": "E:\dataset\segmentation\Person\people_segmentation",

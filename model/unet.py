@@ -9,12 +9,12 @@ class Block(nn.Module):
 
 		self.conv = nn.Sequential(
 			nn.Conv2d(inChannels, outChannels, 3, padding=1),
-			nn.BatchNorm2d(outChannels),
 			nn.ReLU(),
+			nn.BatchNorm2d(outChannels),
 
 			nn.Conv2d(outChannels, outChannels, 3, padding=1),
+			nn.ReLU(),
 			nn.BatchNorm2d(outChannels),
-			nn.ReLU()
 			)
 
 	def forward(self, x):
@@ -77,8 +77,8 @@ class Decoder(nn.Module):
 	def ConvTranspose2d(self, channel1, channel2, kernel, stride):
 		return nn.Sequential(
 			nn.ConvTranspose2d(channel1, channel2, kernel, stride),
+			nn.ReLU(),
 			nn.BatchNorm2d(channel2),
-			nn.ReLU()
 			)
 
 class UNet(nn.Module):

@@ -4,8 +4,8 @@ from PIL import Image
 
 
 modelPath = "check_points/unet.onnx"
-width = 512
-height = 512
+width = 256
+height = 256
 
 net = cv2.dnn.readNetFromONNX(modelPath)
 
@@ -22,7 +22,7 @@ print(image_copy.max(), image_copy.min())
 
 image = image.astype(np.float32)
 
-blob = cv2.dnn.blobFromImage(image, size=(width, height), scalefactor=1/127.5, mean=(127.5, 127.5, 127.5))
+blob = cv2.dnn.blobFromImage(image, size=(width, height), scalefactor=1/127.5, mean=(104, 117, 123))
 print(blob.max(), blob.min())
 net.setInput(blob)
 mask = net.forward()

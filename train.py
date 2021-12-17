@@ -34,7 +34,7 @@ def save_loss_image(train_loss, val_loss, epoch, PATH):
 	plt.plot([k for k in range(1, epoch + 1)], train_loss, label = "Training Loss")
 	plt.plot([k for k in range(1, epoch + 1)], val_loss, label = "Validation Loss")
 	plt.legend()
-	plt.title(PATH)
+	plt.title(os.path.split(PATH)[-1])
 	fig.canvas.draw()
 	img = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
 	img  = img.reshape(fig.canvas.get_width_height()[::-1] + (3,))
@@ -50,7 +50,7 @@ def train(args):
 	args['size'] = int(args['size'])
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-	PATH = os.path.join(args['save_dir'], args["model"])
+	PATH = os.path.join(args['save_dir'], f"{args['model']}_{args['loss']}")
 
 	if args['model'] == 'pspnet':
 		model = PSPNET(output_size=int(args['size']), num_classes=int(args['classes']))

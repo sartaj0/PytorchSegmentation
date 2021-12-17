@@ -23,7 +23,7 @@ class Transformation(object):
 
 		self.gaussianBlur = transforms.GaussianBlur(3)
 		self.grayScale = transforms.Grayscale(3)
-		self.colorJitter = transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.1)
+		self.colorJitter = transforms.ColorJitter(brightness=0.15, contrast=0.15, saturation=0.15, hue=0.1)
 
 	def Resize(self, image, mask):
 		image = image.resize((self.imageSize, self.imageSize))
